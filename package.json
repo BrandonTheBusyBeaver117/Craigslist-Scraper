@@ -1,0 +1,23 @@
+{
+  "name": "craigslistscraper",
+  "version": "1.0.0",
+  "description": "Takes amount of job listings from Craigslist",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@nut-tree/nut-js": "^2.3.0",
+    "@nut-tree/template-matcher": "^1.0.1",
+    "clipboardy": "^3.0.0",
+    "express": "^4.18.2",
+    "papaparse": "^5.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "type": "module"
+}
