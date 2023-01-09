@@ -10,7 +10,7 @@ const app = express()
 
 app.listen(5234)
 
-import { keyboard, Key, mouse, straightTo, centerOf, Button, screen, imageResource, Point, left } from "@nut-tree/nut-js";
+import { keyboard, Key, mouse, straightTo, centerOf, Button, screen, imageResource, Point, left, getActiveWindow, sleep } from "@nut-tree/nut-js";
 import "@nut-tree/template-matcher"; 
 
 // Typing speed
@@ -83,12 +83,41 @@ const truePress = async (...arrayOfKeys) => {
 }
 
 
+const waitForWindowChange = async oldTitle => {
+    return new Promise (async resolve => {
+
+        let currentWindowRef = await getActiveWindow();
+        let currentWindowTitle = await currentWindowRef.title
+
+        while (oldTitle === currentWindowTitle) {
+            await sleep(500)
+
+            console.log("waiting... " + oldTitle)
+
+            currentWindowTitle = await currentWindowRef.title
+
+        }
+
+        await sleep (1500)
+
+        resolve(currentWindowTitle)
+    })
+}
+
 
 const goThroughLinks = async () => {
     
     let parsedData = await readCSV('./links.csv')
 
-    for(const link of parsedData) {
+    let windowRef = await getActiveWindow();
+    let prevWindowTitle = await windowRef.title
+   
+    let jobNumPoint;
+    let cityPoint;
+
+    for(let i = 0; i < parsedData.length; i++) {
+
+        const link = parsedData[i]
 
         // Search
         await truePress(Key.LeftControl, Key.E)
@@ -102,13 +131,13 @@ const goThroughLinks = async () => {
         // Enter
         await keyboard.type(Key.Enter)
 
+        prevWindowTitle = await waitForWindowChange(prevWindowTitle)
 
-        const highlightMatchedImageText = async (fileName, numCharactersToHighlight, additionalMovements = null, time = 2000) => {
+        const highlightMatchedImageText = async (point, numCharactersToHighlight, additionalMovements = null) => {
             // Moving to that little selector
-            await timeoutAwait(() => mouse.move(straightTo(centerOf(screen.find(imageResource(fileName))))), time)
+            await mouse.move(point)
 
             if(additionalMovements != undefined) {
-                console.log(additionalMovements)
                 await additionalMovements()
             }
                 
@@ -125,8 +154,13 @@ const goThroughLinks = async () => {
 
         }
 
+     
+        if(i === 0) {
+            jobNumPoint = await straightTo(centerOf(screen.find(imageResource("job.png"))));
+        }
         
-        await highlightMatchedImageText("better.png", 20)
+        await highlightMatchedImageText(jobNumPoint, 20)
+         
 
         const rawStringJobListings = clipboard.readSync()
 
@@ -146,14 +180,17 @@ const goThroughLinks = async () => {
 
         console.log("Job number: " + trueCleanJobNumber)
 
-        // Moving to the city (lol)
-        await highlightMatchedImageText("upperLeft.png", 20, async () => mouse.move(left(30)), 0)
+        // Moving mouse to the city (lol)
+        if(i === 0) {
+            cityPoint = await straightTo(centerOf(screen.find(imageResource("upperLeft.png"))));
+        }
+        await highlightMatchedImageText(cityPoint, 20, async () => mouse.move(left(35)))
 
         const rawStringCityName = clipboard.readSync();
 
         const rawStringCityNameArray = rawStringCityName.replaceAll("\r", "").split("\n")
 
-        // It's just the third one in the array
+        // The city name is just the third one in the array
         const cityName = rawStringCityNameArray[2]
 
         csvExport.push(new City(cityName, trueCleanJobNumber))
