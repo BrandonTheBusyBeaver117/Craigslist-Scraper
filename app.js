@@ -289,7 +289,7 @@ const main = async () => {
     console.log("Script finished")
 
     //throw new Error("End of script")
-    
+    process.exit()
 }
 
 main()
